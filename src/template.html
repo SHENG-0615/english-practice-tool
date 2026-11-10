@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="按章节复习错词，支持英美音点读、连播、本地听写判题和自建词库。">
+  <title>错词听写</title>
+  <style>/* APP_CSS */
+/* VOCAB_CSS */</style>
+</head>
+<body>
+  <svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 5.5C9 3 5.5 3.5 3 4.5v15c3-1.3 6.5-1 9 1 2.5-2 6-2.3 9-1v-15c-2.5-1-6-1.5-9 1Zm0 0v15"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="m11 4-6 5H2v6h3l6 5Zm4 4a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="M5 5v14m13-14L7 12l11 7Z"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M19 5v14M6 5l11 7-11 7Z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m8 5 7 7-7 7"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-sheet" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M10 4v16"/></symbol>
+  </defs></svg>
+
+  <header class="app-header">
+    <div class="brand"><svg class="brand-mark"><use href="#i-book"/></svg><h1 class="sr-only">听写与词汇练习</h1><nav class="main-areas" aria-label="练习入口"><button id="areaDictation" aria-pressed="true">错词听写</button><button id="areaVocabulary" aria-pressed="false">词汇练习</button></nav><span class="local-label">本机词库</span></div>
+    <div class="header-actions">
+      <button class="button quiet" id="openVoice" aria-label="语音与帮助"><svg aria-hidden="true"><use href="#i-settings"/></svg><span>语音与帮助</span></button>
+      <button class="button quiet" id="backup" aria-label="备份词库"><svg aria-hidden="true"><use href="#i-download"/></svg><span>备份词库</span></button>
+      <button class="button quiet" id="openExcelSync" aria-label="Excel 同步"><svg aria-hidden="true"><use href="#i-sheet"/></svg><span>Excel 同步</span></button>
+      <button class="button primary" id="openImport"><svg><use href="#i-plus"/></svg><span>添加词汇</span></button>
+    </div>
+  </header>
+  <!-- PUBLIC_IMPORT_AREA -->
+
+  <div class="workspace" id="dictationWorkspace">
+    <aside class="sidebar" aria-label="练习范围">
+      <div class="scope-switch" role="group" aria-label="练习入口">
+        <button id="orderedScope" type="button" aria-pressed="true" aria-controls="chapterDetails">顺序练习</button>
+        <button id="mistakesScope" type="button" aria-pressed="false" aria-controls="mistakePanel chapterDetails">错题练习</button>
+      </div>
+      <section id="mistakePanel" class="mistake-panel" aria-label="错题库" hidden>
+        <div class="mistake-summary"><strong>错题库</strong><span id="mistakeCount" aria-live="polite"></span></div>
+        <p>顺序练习中答错的词会自动收录。</p>
+        <button class="sidebar-link" id="manageMistakes" type="button">查看并移出错题</button>
+      </section>
+      <details open class="chapter-details" id="chapterDetails">
+        <summary><span id="chapterSummary">章节选择</span><svg><use href="#i-chevron"/></svg></summary>
+        <div class="chapter-content">
+          <div class="chapter-actions"><button id="selectAll">全选</button><button id="selectNone">清空选择</button></div>
+          <div id="chapterGroups"></div>
+        </div>
+      </details>
+      <div class="library-foot"><span id="librarySummary"></span><p id="chapterFooterHint"></p><button class="sidebar-link" id="addFromSidebar">导入其他章节<svg><use href="#i-plus"/></svg></button></div>
+    </aside>
+
+    <main class="main" id="main">
+      <section class="scope-bar" aria-label="当前词汇范围">
+        <div><h2 id="scopeTitle">顺序练习</h2><p id="scopeDescription"></p></div>
+        <label class="search"><svg><use href="#i-search"/></svg><span class="sr-only">搜索当前词库</span><input id="search" type="search" placeholder="搜索单词、释义或章节" autocomplete="off"></label>
+      </section>
+
+      <div class="workbook-location" id="dictationWorkbookLocation"><span data-file-kind>工作簿位置</span><span data-file-location>正在读取连接状态</span><button class="text-button" data-copy-location hidden>复制地址</button></div>
+
+      <section class="view-bar" aria-label="显示模式">
+        <div class="segmented view-tabs" role="group" aria-label="练习模式">
+          <button id="reviewMode" aria-pressed="true">查看复习</button><button id="practiceMode" aria-pressed="false">纯练习</button><button id="dictationMode" aria-pressed="false">听写练习</button>
+        </div>
+        <label class="display-label" id="displayLabel">显示内容<select id="display"><option value="both">中英双语</option><option value="chinese">只看中文</option><option value="english">只看英文</option></select></label>
+        <span id="practiceHint" class="muted" hidden>答案已隐藏，仅显示序号</span>
+      </section>
+
+      <section class="focus-stage" id="focusStage" aria-label="当前词汇">
+        <div class="focus-meta"><span id="focusChapter"></span><span id="focusPosition" class="tabular"></span></div>
+        <div class="focus-content"><div class="word-content"><div id="focusWord" class="focus-word" lang="en"></div><div id="focusMeaning" class="focus-meaning"></div></div><button class="focus-play" id="replay" aria-label="点读当前词汇" title="点读当前词汇"><svg><use href="#i-sound"/></svg></button></div>
+        <p id="focusHint" class="focus-hint">点击下方词汇旁的播放按钮，可以逐条点读。</p>
+      </section>
+
+      <section class="play-options" aria-label="朗读参数">
+        <div class="accent-field"><span class="field-label">口音</span><div class="segmented accent-tabs" role="group" aria-label="英语口音"><button id="british" aria-pressed="true">英音</button><button id="american" aria-pressed="false">美音</button></div></div>
+        <label>语速<select id="rate"><option value="0.5">0.5 倍</option><option value="0.7">0.7 倍</option><option value="0.85">0.85 倍</option><option value="1" selected>1 倍</option><option value="1.15">1.15 倍</option><option value="1.3">1.3 倍</option><option value="1.5">1.5 倍</option></select></label>
+        <label>每词读<select id="repeat"><option value="1">1 遍</option><option value="2">2 遍</option><option value="3">3 遍</option><option value="4">4 遍</option><option value="5">5 遍</option></select></label>
+        <label>词间停顿<span class="number-field"><input id="gap" type="number" min="0" max="30" step="0.5" value="3" inputmode="decimal" aria-label="词间停顿秒数"><span>秒</span></span></label>
+      </section>
+      <div class="voice-line"><span class="status-dot" id="voiceDot" aria-hidden="true"></span><span id="voiceStatus">正在检查浏览器语音…</span><button id="voiceDetails" class="text-button">选择声音</button></div>
+      <div id="storageNotice" class="notice" hidden></div>
+
+      <section class="dictation-panel" id="dictationPanel" aria-labelledby="dictationTitle" hidden>
+        <div class="dictation-heading"><div><h3 id="dictationTitle">听写练习</h3><div class="dictation-meta"><p id="bookQuestionNumber" hidden></p><p id="dictationScore"></p></div></div><button class="text-button" id="resetDictation">重新练本组</button></div>
+        <div id="dictationPlayerSlot"></div>
+        <form id="dictationForm" novalidate>
+          <label id="dictationAnswerLabel" for="dictationAnswer">输入听到的英文</label>
+          <div class="answer-row"><input id="dictationAnswer" type="text" lang="en" maxlength="300" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="next" aria-describedby="dictationRules dictationInputError" placeholder="输入后按回车，立即判题并进入下一题"><button class="button primary" id="submitDictation" type="submit">提交并下一题<svg aria-hidden="true"><use href="#i-chevron"/></svg></button></div>
+          <p id="dictationRules" class="small muted">大小写不计错；单复数和字母严格匹配。回车后立即反馈，并播放下一题。</p>
+          <p id="dictationInputError" class="input-error" role="status" hidden></p>
+        </form>
+        <div class="dictation-complete" id="dictationComplete" role="region" tabindex="-1" aria-labelledby="dictationCompleteTitle" aria-describedby="dictationCompleteScore" hidden><svg aria-hidden="true"><use href="#i-check"/></svg><h3 id="dictationCompleteTitle">本轮听写已完成</h3><p id="dictationCompleteScore"></p><button class="button primary" id="restartDictation">再练一遍</button></div>
+        <div id="dictationFeedback" class="dictation-feedback" role="status" aria-live="polite" hidden></div>
+      </section>
+
+      <section class="list-section" aria-labelledby="listTitle">
+        <div class="list-heading"><h3 id="listTitle">本次词汇</h3><span id="listCount" class="muted"></span><button id="clearSearch" class="text-button" hidden>清除搜索</button></div>
+        <div id="wordList"></div>
+        <div class="empty-state" id="emptyState" hidden><h3 id="emptyTitle">先选择一个章节</h3><p id="emptyDescription">勾选左侧章节，即可开始点读或连播。</p><button class="button" id="emptyAction">选择全部章节</button></div>
+      </section>
+
+      <span id="playerHome" hidden></span>
+      <section class="player-dock" id="playerDock" aria-label="播放控制">
+        <div class="progress-line"><span id="playerStatus" role="status" aria-live="polite">准备开始</span><span id="playerPosition" class="tabular"></span></div>
+        <progress id="progress" value="0" max="1" aria-label="播放进度"></progress>
+        <div class="transport">
+          <div class="transport-side"><button class="icon-button" id="previous" aria-label="上一个词" title="上一个词"><svg><use href="#i-prev"/></svg></button><button class="icon-button" id="next" aria-label="下一个词" title="下一个词"><svg><use href="#i-next"/></svg></button></div>
+          <button class="button primary play-all" id="playAll"><svg><use href="#i-play"/></svg><span>播放全部</span></button>
+          <div class="transport-side end"><button class="button stop-button" id="stop" aria-label="停止播放" disabled><svg aria-hidden="true"><use href="#i-stop"/></svg><span>停止</span></button></div>
+        </div>
+        <div class="keyboard-hint">空格播放／暂停，左右方向键切换词汇</div>
+      </section>
+    </main>
+  </div>
+
+  <!-- VOCAB_AREA -->
+
+  <dialog id="importDialog" aria-labelledby="importTitle">
+    <div class="dialog-heading"><div><h2 id="importTitle">添加词汇</h2><p>粘贴新词，或导入表格和词库备份。</p></div><button class="icon-button close-dialog" data-close="importDialog" aria-label="关闭添加词汇"><svg><use href="#i-close"/></svg></button></div>
+    <div class="import-tabs segmented" role="group" aria-label="添加方式"><button id="pasteTab" aria-pressed="true">粘贴文本</button><button id="fileTab" aria-pressed="false">导入文件</button></div>
+    <div class="import-defaults"><label>词库来源<input id="importSource" value="自建词库" maxlength="120" placeholder="例如雅思听力王、补充词汇"></label><label>默认章节<input id="importChapter" value="未分类" maxlength="100" placeholder="例如：3.1、11.1"></label></div>
+    <p class="small muted">表格已写明来源、章节时，保留表格内容；这里补充未填写的值。</p>
+    <div id="pastePane"><label for="pasteText">一行一个词；可附中文和章节</label><textarea id="pasteText" rows="6" spellcheck="false" placeholder="accommodation | 住宿 | 3.1&#10;photography | 摄影 | 11.1&#10;train station | 火车站 | 3.1"></textarea><p class="small muted">支持竖线、制表符和 CSV 分列。短语可以保留空格，中文可留空。</p></div>
+    <div id="filePane" hidden><label class="file-picker">选择文件<input id="importFile" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt,.json"><span>支持 Excel、CSV、TXT、TSV 和本工具导出的 JSON 备份</span></label><p class="small muted">你的自批改表会自动读取“错词总表”和“错词练习”。请先在 WPS 保存最新结果。</p><p class="small muted">普通 Excel 建议使用表头：英文、中文、章节；也支持无表头的三列表格。</p></div>
+    <div class="preview-actions"><button class="button" id="previewImport">预览词汇</button><span id="importFeedback" role="status"></span></div>
+    <div id="importPreview" hidden><div id="previewSummary" class="preview-summary"></div><div class="preview-table-wrap"><table class="preview-table"><thead><tr><th>英文</th><th>中文</th><th>章节</th></tr></thead><tbody id="previewRows"></tbody></table></div><p id="previewNotes" class="small muted"></p><label id="restoreSettingsLabel" class="checkbox-label" hidden><input id="restoreSettings" type="checkbox">同时恢复备份中的播放设置</label><label id="restorePracticeLabel" class="checkbox-label" hidden><input id="restorePractice" type="checkbox">同时恢复听写记录和错题库</label></div>
+    <div class="dialog-footer"><button class="button" data-close="importDialog">取消</button><button class="button primary" id="commitImport" disabled>加入词库</button></div>
+  </dialog>
+
+  <dialog id="voiceDialog" aria-labelledby="voiceTitle">
+    <div class="dialog-heading"><div><h2 id="voiceTitle">语音与帮助</h2><p>选择当前口音的声音，并检查设备是否已准备好。</p></div><button class="icon-button close-dialog" data-close="voiceDialog" aria-label="关闭语音与帮助"><svg><use href="#i-close"/></svg></button></div>
+    <div class="voice-settings"><label>口音<select id="dialogAccent"><option value="en-GB">英音 English (UK)</option><option value="en-US">美音 English (US)</option></select></label><label>声音<select id="voiceChoice"></select></label></div>
+    <div class="voice-actions"><button class="button primary" id="testVoice"><svg><use href="#i-sound"/></svg>试听</button><button class="button" id="refreshVoices">刷新语音</button><span id="voiceInventory" class="small muted"></span></div>
+    <p id="missingVoice" class="notice" hidden></p>
+    <details class="help-details" id="voiceHelp"><summary>缺少英音或没有声音怎么办？</summary><ol><li>先用 Microsoft Edge 或 Google Chrome 打开本文件，再点击“刷新语音”。</li><li>Windows 中打开“设置 → 时间和语言 → 语音 → 添加语音”，添加英语（英国）或英语（美国）。</li><li>安装后完全退出并重新打开浏览器，再刷新语音列表。</li></ol><p><a href="ms-settings:speech">打开 Windows 语音设置</a> <a href="https://support.microsoft.com/en-us/accessibility/windows/narrator/appendix-a-supported-languages-and-voices" target="_blank" rel="noopener noreferrer">微软官方说明</a></p><p class="small muted">只使用实际标记为 en-GB 或 en-US 的声音。本地声音可离线使用；在线声音需要网络，声音是否自然取决于浏览器提供的语音。</p></details>
+    <details class="help-details"><summary>如何开始练习？</summary><p>本工具不附带词库或作答记录。先点“导入本地词库”，选择自己的 XLSX、CSV、TXT 或 JSON。词库及练习记录只保存在本机浏览器。</p><p>听写支持英美音、点读、连播、回车判分、错题库及手动标记不确定；词汇支持学习、看中文拼写及按词性填写中文释义。词性少答算对并提示缺漏。</p><p>兼容的完整工作簿可写回原列与汇总。普通词单仅在浏览器保存练习。若用 Windows 本机启动入口，两份兼容表需由使用者自行放入工具文件夹。</p></details>
+    <details class="help-details"><summary>参考项目与组件许可</summary><p>交互参考 <a href="https://github.com/RealKai42/qwerty-learner" target="_blank" rel="noopener noreferrer">Qwerty Learner</a>、<a href="https://github.com/zyronon/TypeWords" target="_blank" rel="noopener noreferrer">TypeWords</a> 和 <a href="https://github.com/ankitects/anki" target="_blank" rel="noopener noreferrer">Anki</a>，没有复制这些项目代码。</p><p>表格读取使用 SheetJS CE（Apache-2.0），工作簿打包使用 JSZip（MIT）。</p><details><summary>SheetJS 许可证</summary><pre class="license-text"><!-- SHEETJS_LICENSE --></pre></details><details><summary>JSZip 许可证</summary><pre class="license-text"><!-- JSZIP_LICENSE --></pre></details></details>
+    <div class="dialog-footer"><button class="button primary" data-close="voiceDialog">完成</button></div>
+  </dialog>
+  <dialog id="excelSyncDialog" aria-labelledby="excelSyncTitle">
+    <div class="dialog-heading"><div><h2 id="excelSyncTitle">Excel 同步</h2><p>作答写回原章节的听写栏，错词同步到“错词总表”和“错词练习”。</p></div><button class="icon-button close-dialog" data-close="excelSyncDialog" aria-label="关闭 Excel 同步"><svg><use href="#i-close"/></svg></button></div>
+    <p id="xlsxStatus" class="preview-summary" role="status" aria-live="polite">正在读取本机作答记录。</p>
+    <p id="xlsxSyncError" class="notice" role="status" hidden></p>
+    <p class="small muted" id="xlsxConnectionHelp">请先在 WPS 或 Excel 里关闭这份工作簿，再选择本地 XLSX 并授权。授权后自动分批写入，也可点击“立即同步”。</p>
+    <details class="help-details"><summary>记录内容</summary><p>同一轮在每章固定填入一个“听写”列。点击“重新练本组”或“再练一遍”后，新一轮填到下一列。答错的词加入“错词练习”，对应的“错词总表”也会更新。手动标记不确定的词也会加入“错词练习”。完整作答明细另存于“HTML 听写记录”。</p></details>
+    <div class="dialog-footer"><button class="button" id="useLocalWorkbook" hidden>连接同文件夹表格</button><button class="button primary" id="pickWorkbook" disabled>选择工作簿</button><button class="button primary" id="syncWorkbook" hidden>立即同步</button></div>
+  </dialog>
+  <div class="toast" id="toast" role="status" hidden><span id="toastText"></span><button id="undoImport" hidden>撤销本次添加</button><button class="toast-close" id="closeToast" aria-label="关闭提示"><svg><use href="#i-close"/></svg></button></div>
+
+  <script id="seedData" type="application/json">/* SEED_JSON */</script>
+  <script id="vocabularyData" type="application/json">/* VOCAB_JSON */</script>
+  <script id="xlsxRuntime">/* XLSX_LIBRARY */</script>
+  <script id="coreRuntime">/* CORE_JS */</script>
+  <script>/* JSZIP_LIBRARY */</script>
+  <script>/* XLSX_LOG_JS */</script>
+  <script>/* XLSX_CHAPTERS_JS */</script>
+  <script>window.__IELTS_LOCAL_CONFIG__ = /* LOCAL_CONFIG_START */null/* LOCAL_CONFIG_END */;</script>
+  <script>/* LOCAL_FILES_JS */</script>
+  <script>/* XLSX_SYNC_JS */</script>
+  <script>/* VOCAB_CORE_JS */</script>
+  <script>/* VOCAB_BANK_JS */</script>
+  <script>/* XLSX_IMPORTANCE_JS */</script>
+  <script>/* PUBLIC_DATA_JS */</script>
+  <script>/* APP_JS */</script>
+  <script>/* VOCAB_WORKBOOK_JS */</script>
+  <script>/* VOCAB_APP_JS */</script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+  <div class="workspace" id="vocabularyWorkspace" hidden>
+    <aside class="sidebar" aria-label="词汇练习范围">
+      <div class="vocab-book-title">词汇练习</div>
+      <p class="vocab-rail-note">导入自己的词表后开始</p>
+      <div class="scope-switch" role="group" aria-label="词汇范围"><button id="vocabListScope" aria-pressed="true">按 List 练习</button><button id="vocabBankScope" aria-pressed="false">词汇错题总库 <span id="vocabBankTotal"></span></button></div>
+      <div id="vocabListOptions">
+      <label class="vocab-mistake-filter"><input type="checkbox" id="vocabOnlyMistakes">只练错题／待巩固</label>
+      <div class="chapter-actions"><button id="vocabSelectAll">全选</button><button id="vocabSelectNone">清空选择</button></div>
+      <div id="vocabLists" class="chapter-options"></div>
+      </div>
+      <p class="vocab-rail-note" id="vocabBankHint" hidden>跨全部 List 汇总拼写与释义记录；与听写错题分开。手动移出后，再答错会重新加入。</p>
+      <div class="library-foot"><span id="publicVocabCount">尚未导入词库</span><p>拼写与释义分别保存轮次。新一轮写入下一列。</p></div>
+    </aside>
+    <main class="main" id="vocabMain">
+      <section class="scope-bar" aria-label="当前词汇范围">
+        <div><h2 id="vocabAreaTitle">词汇练习</h2><p id="vocabScope"></p><p id="vocabSyncBrief" aria-live="polite"></p></div>
+        <label class="search"><svg><use href="#i-search"/></svg><span class="sr-only">搜索词汇</span><input id="vocabSearch" type="search" placeholder="搜索单词、中文或 List" autocomplete="off"></label>
+      </section>
+      <div class="workbook-location" id="vocabWorkbookLocation"><span data-file-kind>工作簿位置</span><span data-file-location>正在读取连接状态</span><button class="text-button" data-copy-location hidden>复制地址</button></div>
+      <p id="vocabWritebackReceipt" class="small muted" aria-live="polite"></p>
+      <section class="vocab-bank-filters" id="vocabBankFilters" hidden aria-label="词汇错题筛选">
+        <div class="segmented" role="group" aria-label="错题结果分类"><button id="vocabBankAll" aria-pressed="true">都看</button><button id="vocabBankWrong" aria-pressed="false">只看错题</button><button id="vocabBankPartial" aria-pressed="false">只看少答</button></div>
+        <label>题型<select id="vocabBankKind"><option value="all">拼写和释义</option><option value="spelling">拼写</option><option value="meaning">释义</option></select></label>
+        <label>来源<select id="vocabBankList"><option value="all">全部 List</option></select></label>
+        <p class="small muted">查看时显示正确答案；切换练习模式后只显示已提交题的答案。* 表示原表加粗重点词。</p>
+      </section>
+      <section class="view-bar" aria-label="词汇模式">
+        <div class="segmented view-tabs" role="group" aria-label="词汇练习模式">
+          <button id="vocabStudyMode" aria-pressed="true">词汇学习</button>
+          <button id="vocabSpellingMode" aria-pressed="false">拼写练习</button>
+          <button id="vocabMeaningMode" aria-pressed="false">释义练习</button>
+        </div>
+        <label class="display-label" id="vocabDisplayLabel">显示内容<select id="vocabDisplay"><option value="both">中英双语</option><option value="chinese">只看中文</option><option value="english">只看英文</option></select></label>
+      </section>
+      <section class="focus-stage" id="vocabStudyPanel" aria-label="词汇学习">
+        <div class="focus-meta"><span id="vocabStudySource"></span><span id="vocabStudyPosition"></span></div>
+        <div class="focus-content"><div class="word-content"><div class="focus-word" id="vocabStudyWord"></div><div class="focus-meaning" id="vocabStudyMeaning"></div><p class="small muted" id="vocabPhonetic"></p></div><button class="focus-play" id="vocabPronounce" aria-label="朗读当前单词"><svg><use href="#i-sound"/></svg></button></div>
+        <div class="vocab-study-nav"><button class="button" id="vocabPrevious">上一词</button><button class="button primary" id="vocabNext">下一词</button></div>
+      </section>
+      <section class="dictation-panel" id="vocabPracticePanel" aria-labelledby="vocabPracticeTitle" hidden>
+        <div class="dictation-heading"><div><h3 id="vocabPracticeTitle"></h3><p id="vocabQuestionSource"></p><p id="vocabScore"></p></div><button class="text-button" id="vocabRestart">重新练一轮</button></div>
+        <div class="vocab-prompt" id="vocabPrompt"></div>
+        <form id="vocabAnswerForm" novalidate>
+          <div id="vocabInputs" class="vocab-answer-inputs"></div>
+          <p class="input-error" id="vocabInputError" role="status" hidden></p>
+          <p class="small muted" id="vocabInputHint"></p>
+          <button class="button primary vocab-submit" type="submit">提交并下一题<svg><use href="#i-chevron"/></svg></button>
+        </form>
+        <div class="dictation-complete" id="vocabComplete" tabindex="-1" hidden><svg><use href="#i-check"/></svg><h3>本轮已完成</h3><p id="vocabCompleteScore"></p><button class="button primary" id="vocabNextRound">再练一轮</button></div>
+        <div class="dictation-feedback" id="vocabFeedback" role="status" aria-live="polite" hidden></div>
+      </section>
+      <section class="list-section">
+        <div class="list-heading"><h3 id="vocabTableTitle">本次词汇</h3><span class="muted" id="vocabTableCount"></span></div>
+        <div id="vocabTable"></div>
+        <div class="empty-state" id="vocabEmpty" hidden><h3>当前没有可练词汇</h3><p>选择 List，或调整错题筛选和搜索。</p></div>
+      </section>
+    </main>
+  </div>
+  <dialog id="vocabSyncDialog" aria-labelledby="vocabSyncTitle">
+    <div class="dialog-heading"><div><h2 id="vocabSyncTitle">词汇表同步</h2><p>拼写写回“默写”列，中文写回“释义”列，按轮次同步。</p></div><button class="icon-button close-dialog" data-close="vocabSyncDialog" aria-label="关闭词汇表同步"><svg><use href="#i-close"/></svg></button></div>
+    <p class="preview-summary" id="vocabSyncStatus" role="status"></p>
+    <p class="small muted" id="vocabDialogWritebackReceipt"></p>
+    <p class="notice" id="vocabSyncError" hidden></p>
+    <p class="small muted" id="vocabConnectionHelp">在 WPS 或 Excel 中关闭该表，再选择《雅思词汇练习.xlsx》并授权。练习记录会自动分批同步。</p>
+    <p class="small muted">同词多词性分别判分，少答按对计并列为待巩固。学习浏览不会计为已完成作答。</p>
+    <div class="dialog-footer"><button class="button" id="vocabUseLocalWorkbook" hidden>连接同文件夹表格</button><button class="button primary" id="vocabPickWorkbook" disabled>选择词汇工作簿</button><button class="button primary" id="vocabSyncNow" hidden>立即同步</button></div>
+  </dialog>

@@ -1,0 +1,16 @@
+  <section class="public-import-bar" aria-label="本地词库">
+    <div><strong>使用自己的词库</strong><p id="publicDatasetStatus" role="status">空词库 · 词表和练习记录只保存在本机</p></div>
+    <button class="button primary" id="publicOpenImport">导入本地词库</button>
+  </section>
+  <dialog id="publicImportDialog" aria-labelledby="publicImportTitle">
+    <div class="dialog-heading"><div><h2 id="publicImportTitle">导入本地词库</h2><p>文件由浏览器本地读取，不会发送到 GitHub 或其他服务器。</p></div><button class="icon-button" data-close="publicImportDialog" aria-label="关闭导入"><svg><use href="#i-close"/></svg></button></div>
+    <div class="public-import-fields">
+      <label>练习用途<select id="publicImportTarget"><option value="auto">按文件内容识别</option><option value="dictation">听写练习</option><option value="vocabulary">词汇练习</option><option value="both">听写和词汇练习</option></select></label>
+      <label>选择词表<input id="publicImportFile" type="file" accept=".xlsx,.csv,.tsv,.txt,.json"></label>
+      <p class="small muted">普通词表使用“英文、中文、章节”列。也支持兼容的章节听写表及 List 词汇表。词库需要由你自行提供。</p>
+      <label class="checkbox-label"><input type="checkbox" id="publicResumeImported">接续兼容 List 表中已有的作答，仅保存在本机</label>
+    </div>
+    <p class="preview-summary" id="publicImportSummary" role="status">选择文件后预览词数和用途。</p>
+    <p class="notice" id="publicImportError" role="alert" hidden></p>
+    <div class="dialog-footer"><button class="button" data-close="publicImportDialog">取消</button><button class="button primary" id="publicImportCommit" disabled>使用这份词库</button></div>
+  </dialog>
