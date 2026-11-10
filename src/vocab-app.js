@@ -19,6 +19,7 @@
   const uuid = () => window.crypto?.randomUUID?.() || Date.now() + '-' + Math.random().toString(36).slice(2);
   const history = [];
   const initial = { mode: 'study', scope: 'lists', bankStatus: 'all', bankKind: 'all', bankList: 'all', bankQuery: '', display: 'both', selected: lists.length ? [lists[0]] : [], onlyMistakes: false, search: '', studyIndex: 0, sessions: {}, bankSessions: {}, spellingErrors: [], meaningErrors: [] };
+  initial.writeColumns = { spelling: 'auto', meaning: 'auto' };
   const spellingErrors = new Set(), meaningErrors = new Set();
   for (const mode of modes) {
     const session = { answers: {}, drafts: {}, rounds: {}, lastId: '' };
@@ -71,6 +72,8 @@
   } catch (_) { /* The workbook snapshot remains available. */ }
 
   state.scope = state.scope === 'bank' ? 'bank' : 'lists';
+  state.writeColumns = { ...initial.writeColumns, ...state.writeColumns };
+  for (const mode of modes) if (state.writeColumns[mode] !== 'auto' && !/^\d+$/.test(String(state.writeColumns[mode]))) state.writeColumns[mode] = 'auto';
   state.bankStatus = ['all', 'wrong', 'partial'].includes(state.bankStatus) ? state.bankStatus : 'all';
   state.bankKind = ['all', ...modes].includes(state.bankKind) ? state.bankKind : 'all';
   state.bankList = lists.includes(state.bankList) ? state.bankList : 'all';
@@ -113,6 +116,33 @@
     }
   }
   function currentSession() { return (state.scope === 'bank' ? state.bankSessions : state.sessions)[state.mode]; }
+  const columnName = number => { let text = ''; while (number) { text = String.fromCharCode(65 + (number - 1) % 26) + text; number = Math.floor((number - 1) / 26); } return text; };
+  function writeColumn(mode, index) {
+    const start = mode === 'spelling' ? 5 : 25;
+    return { input: columnName(start + index * 2), feedback: columnName(start + index * 2 + 1), title: (mode === 'spelling' ? '默写' : '释义') + (index + 1) };
+  }
+  function renderWriteColumn() {
+    const show = seed.syncCompatible && state.scope === 'lists' && modes.includes(state.mode);
+    $('vocabRoundTarget').hidden = !show;
+    if (!show) return;
+    const select = $('vocabWriteColumn'), limit = state.mode === 'spelling' ? 10 : 5;
+    select.replaceChildren();
+    const automatic = element('option', '', '自动选下一空练习列'); automatic.value = 'auto'; select.append(automatic);
+    for (let index = 0; index < limit; index++) {
+      const column = writeColumn(state.mode, index);
+      const option = element('option', '', column.input + ' 列 · ' + column.title + '（' + column.feedback + ' 列判定）'); option.value = index; select.append(option);
+    }
+    if (state.writeColumns[state.mode] !== 'auto' && Number(state.writeColumns[state.mode]) >= limit) state.writeColumns[state.mode] = 'auto';
+    select.value = state.writeColumns[state.mode];
+    $('vocabApplyWriteColumn').disabled = !state.selected.length;
+    const current = state.selected.map(name => {
+      const round = state.sessions[state.mode].rounds[name];
+      const index = round?.targetIndex ?? (round?.native ? round.index : null);
+      const column = Number.isInteger(index) ? writeColumn(state.mode, index) : null;
+      return name + ' → ' + (column ? column.input + ' 列（' + column.title + '），' + column.feedback + ' 列判定' : '自动选择空列，成功同步后显示位置');
+    });
+    $('vocabCurrentWriteColumn').textContent = current.length ? '当前轮写入：' + current.slice(0, 3).join('；') + (current.length > 3 ? '；其余 ' + (current.length - 3) + ' 个 List 同规则' : '') : '请先选择 List。';
+  }
   function bankRecords(status = state.bankStatus) {
     return bank.list({ status, mode: state.mode === 'study' ? state.bankKind : state.mode, list: state.bankList, query: state.bankQuery });
   }
@@ -348,6 +378,7 @@
     $('vocabStudyPanel').hidden = !study || !words.length;
     $('vocabPracticePanel').hidden = study || !words.length;
     $('vocabEmpty').hidden = !!words.length;
+    renderWriteColumn();
     renderLists();
     if (study) renderStudy(); else renderPractice();
     renderTable();
@@ -376,17 +407,29 @@
     if (activeQuestion()) $('vocabInputs').querySelector('input')?.focus({ preventScroll: true });
     else $('vocabComplete').focus({ preventScroll: true });
   }
-  function restart() {
+  function startRound(choice) {
     if (state.mode === 'study') return;
     const session = currentSession();
     const targets = state.scope === 'bank' ? words : entries.filter(item => state.selected.includes(item.list));
-    for (const name of new Set(targets.map(item => item.list))) session.rounds[name] = { id: 'round-' + state.mode + '-' + uuid(), native: false };
+    const rounds = {}, limit = state.mode === 'spelling' ? 10 : 5;
+    for (const name of new Set(targets.map(item => item.list))) {
+      const previous = session.rounds[name];
+      const index = choice === undefined ? Number.isInteger(previous?.targetIndex) ? previous.targetIndex + 1 : null : choice === 'auto' ? null : Number(choice);
+      if (index !== null && (!Number.isInteger(index) || index < 0 || index >= limit)) {
+        $('vocabColumnError').textContent = name + ' 已到最后一个练习列，请保留记录，换一份练习副本后再开始。'; $('vocabColumnError').hidden = false; return;
+      }
+      rounds[name] = { id: 'round-' + state.mode + '-' + uuid(), native: false, ...(index !== null ? { targetIndex: index } : {}) };
+    }
+    Object.assign(session.rounds, rounds);
     for (const entry of targets) { delete session.answers[entry.id]; delete session.drafts[entry.id]; }
     session.lastId = '';
+    if (choice !== undefined) { state.onlyMistakes = false; state.search = ''; }
+    $('vocabColumnError').hidden = true;
     $('vocabInputs').dataset.question = '';
     render(); persist();
     $('vocabInputs').querySelector('input')?.focus({ preventScroll: true });
   }
+  function restart() { startRound(); }
   function renderSync(status) {
     const receipt = status.writebackReceipt;
     const targetText = receipt?.targets?.slice(0, 3).map(target => target.list + ' · ' + (target.mode === 'spelling' ? '默写' : '释义') + target.round + '（' + target.column + ' 列）· ' + target.ranges.slice(0, 3).join('、')).join('；');
@@ -451,6 +494,8 @@
   $('vocabSearch').addEventListener('input', event => { if (state.scope === 'bank') state.bankQuery = event.target.value; else state.search = event.target.value; state.studyIndex = 0; render(); persist(); });
   $('vocabSelectAll').addEventListener('click', () => { state.selected = [...lists]; render(); persist(); });
   $('vocabSelectNone').addEventListener('click', () => { state.selected = []; render(); persist(); });
+  $('vocabWriteColumn').addEventListener('change', event => { state.writeColumns[state.mode] = event.target.value; $('vocabColumnError').hidden = true; persist(); });
+  $('vocabApplyWriteColumn').addEventListener('click', () => startRound(state.writeColumns[state.mode]));
   $('vocabPrevious').addEventListener('click', () => { state.studyIndex--; renderStudy(); persist(); });
   $('vocabNext').addEventListener('click', () => { state.studyIndex++; renderStudy(); persist(); });
   $('vocabPronounce').addEventListener('click', () => { const entry = studyItem(); if (entry) window.DictationAudio?.read(entry.word); });

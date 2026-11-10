@@ -32,6 +32,13 @@
         </div>
         <label class="display-label" id="vocabDisplayLabel">显示内容<select id="vocabDisplay"><option value="both">中英双语</option><option value="chinese">只看中文</option><option value="english">只看英文</option></select></label>
       </section>
+      <section id="vocabRoundTarget" class="vocab-round-target" aria-label="List 写入列" hidden>
+        <label>起始练习列<select id="vocabWriteColumn"></select></label>
+        <button id="vocabApplyWriteColumn" class="button">从所选列开始新一轮</button>
+        <p id="vocabCurrentWriteColumn" class="small"></p>
+        <p class="small muted">按已选 List 的原词序写回。每轮固定一列，重练整轮后进入下一组列；旧答案保留，答错联动表内错题页。</p>
+        <p id="vocabColumnError" class="input-error" role="status" hidden></p>
+      </section>
       <section class="focus-stage" id="vocabStudyPanel" aria-label="词汇学习">
         <div class="focus-meta"><span id="vocabStudySource"></span><span id="vocabStudyPosition"></span></div>
         <div class="focus-content"><div class="word-content"><div class="focus-word" id="vocabStudyWord"></div><div class="focus-meaning" id="vocabStudyMeaning"></div><p class="small muted" id="vocabPhonetic"></p></div><button class="focus-play" id="vocabPronounce" aria-label="朗读当前单词"><svg><use href="#i-sound"/></svg></button></div>

@@ -204,10 +204,14 @@
       const t = await load(entry.list);
       if (String(t.get('B' + entry.row)) !== entry.word) throw new Error(entry.list + ' 词条位置已变化，请保留原表行顺序后再同步。');
       const start = record.mode === 'spelling' ? 5 : 25, limit = record.mode === 'spelling' ? 10 : 5;
+      const requested = record.round.targetIndex;
+      if (requested !== undefined && (!Number.isInteger(requested) || requested < 0 || requested >= limit)) throw new Error('所选练习列不在原表范围内，尚未写入。');
       const key = [record.mode, entry.list, record.round.id].join('|');
       let column = mapping.get(key);
+      if (column && requested !== undefined && column !== start + requested * 2) throw new Error('本轮已固定写入另一列，请开始新一轮后再选择起始列。');
       if (!column) {
-        if (record.round.native && Number.isInteger(record.round.index) && record.round.index >= 0 && record.round.index < limit) column = start + record.round.index * 2;
+        if (requested !== undefined) column = start + requested * 2;
+        else if (record.round.native && Number.isInteger(record.round.index) && record.round.index >= 0 && record.round.index < limit) column = start + record.round.index * 2;
         else {
           let occupied = -1;
           for (let i = 0; i < limit; i++) if (entries.some(e => e.list === entry.list && String(t.get(col(start + i * 2) + e.row)) !== '')) occupied = i;

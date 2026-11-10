@@ -8,6 +8,10 @@
 .vocab-bank-filters label { display: flex; align-items: center; gap: 7px; font-size: 12px; }
 .vocab-bank-filters select { max-width: 140px; min-height: 34px; border: 1px solid var(--line); border-radius: 5px; background: var(--paper); }
 .vocab-bank-filters > p { flex-basis: 100%; }
+.vocab-round-target { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.vocab-round-target label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
+.vocab-round-target select { max-width: 100%; min-height: 38px; border: 1px solid var(--line); border-radius: 5px; background: var(--paper); padding: 6px 10px; }
+.vocab-round-target > p { flex-basis: 100%; line-height: 1.7; overflow-wrap: anywhere; }
 #vocabWritebackReceipt { margin-top: 6px; overflow-wrap: anywhere; }
 #vocabBankHint { line-height: 1.8; padding: 10px 8px; }
 #vocabTable { overflow-x: auto; }
