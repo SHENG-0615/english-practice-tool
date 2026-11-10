@@ -82,6 +82,7 @@ async function importLocal(page, filename, target) {
     const book = XLSX.utils.book_new();
     const sheet = { '!ref': 'A1:CX3', A2: { t: 's', v: '序号' }, B3: { t: 's', v: 'synthetic' }, D3: { t: 's', v: 'adj. 合成的' }, AI3: { t: 's', v: 'synthetic' }, AJ3: { t: 's', v: 'adj. 合成的' }, AN3: { t: 's', v: '合成' } };
     XLSX.utils.book_append_sheet(book, sheet, 'List01');
+    for (const name of ['List50', '错词总表', '释义不确定']) XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet([['Authored test structure']]), name);
     const xlsx = path.join(temporary, 'synthetic.xlsx');
     const zip = await JSZip.loadAsync(XLSX.write(book, { type: 'buffer', bookType: 'xlsx' }));
     let styles = await zip.file('xl/styles.xml').async('string');
@@ -101,8 +102,12 @@ async function importLocal(page, filename, target) {
     await page.locator('#vocabListScope').click(); await page.locator('#vocabStudyMode').click();
     assert.equal(await page.locator('#vocabStudyWord .priority-mark').textContent(), '*');
     await page.locator('#vocabMeaningMode').click();
+    await page.locator('#vocabWriteColumn').selectOption('1'); await page.locator('#vocabApplyWriteColumn').click();
+    assert((await page.locator('#vocabCurrentWriteColumn').textContent()).includes('AA 列（释义2）'));
     await page.locator('#vocabAnswer0').fill('合成'); await page.locator('#vocabAnswer0').press('Enter');
     assert((await page.locator('#vocabFeedback').textContent()).includes('答对了'));
+    await page.locator('#vocabRestart').click();
+    assert((await page.locator('#vocabCurrentWriteColumn').textContent()).includes('AC 列（释义3）'));
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     assert.deepEqual(errors, []); assert.deepEqual(requests, []);
